@@ -14,13 +14,13 @@ class Read_xml():
         return [ os.path.join(self.directory, arq) for arq in os.listdir(self.directory) if arq.lower().endswith('.xml')]
     
     def buscaDb(self, elem, tb):
-        self.buscaDb = db()
-        self.buscaDb.conecta()
+        self.busca = db()
+        self.busca.conecta()
         if tb == 'TBUso':
-            resultado = self.buscaDb.check_uso(elem)
+            resultado = self.busca.check_uso(elem)
         else:
-            resultado = self.buscaDb.check_cfop(elem)
-        self.buscaDb.close_conection()
+            resultado = self.busca.check_cfop(elem)
+        self.busca.close_conection()
         return resultado
         
     def atribui_parametros(self, xml):
