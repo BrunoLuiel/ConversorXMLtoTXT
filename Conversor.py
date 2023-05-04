@@ -1,17 +1,52 @@
 import xml.etree.ElementTree as Et
 import os
 from BancoDados import DataBase5 as db
+import shutil
 
 class Read_xml():
     def __init__(self,directory)->None:
         self.directory=directory
-        files = self.allfiles()
-        for file in files:
+        self.files = self.allfiles()
+        #Exclui Pastas
+        for i in ['\\Avisos', '\\ArquivosDominioSeparador']:
+            try:
+                shutil.rmtree(self.directory + i)
+            except:
+                pass
+
+        for file in self.files:
             self.obj1 = self.atribui_parametros(file)
             self.check_chave(file, self.obj1[0], self.obj1[1], self.obj1[2])
 
+
+
     def allfiles(self):
         return [ os.path.join(self.directory, arq) for arq in os.listdir(self.directory) if arq.lower().endswith('.xml')]
+    
+    def contaArquivos(self, directory):
+        contaArq = 0
+        files = self.files
+        for file in files:
+            contaArq += 1
+        return contaArq
+
+    
+    def virgulaEmPonto(self, arg):
+        try:
+            arg = str(arg).replace(',','.')
+            arg = float(arg)
+        except:
+            pass
+        return arg
+    
+    def pontoPorVirgula(self, arg):
+        try:
+            arg = str(arg).replace('.',',')
+            arg = float(arg)
+        except:
+            pass
+        return arg
+    
     
     def buscaDb(self, elem, tb):
         self.busca = db()
@@ -22,11 +57,42 @@ class Read_xml():
             resultado = self.busca.check_cfop(elem)
         self.busca.close_conection()
         return resultado
+    
+    def resumeLista(self,lista):
+        listaSoma = []
+        for i, lista1 in enumerate(lista):
+            soma_tProd = self.virgulaEmPonto(lista1[0])
+            soma_bc= self.virgulaEmPonto(lista1[2])
+            soma_vImp = self.virgulaEmPonto(lista1[3])
+            validador = ''
+            for j, lista2 in enumerate(lista):
+                if i !=j and lista1[1] == lista2[1]:
+                    soma_tProd = soma_tProd + self.virgulaEmPonto(lista2[0])
+                    soma_bc = soma_bc + self.virgulaEmPonto(lista2[2])
+                    soma_vImp = soma_vImp + self.virgulaEmPonto(lista2[3])
+            for x, list in enumerate(listaSoma):
+                if listaSoma[x][1] == lista1[1]: 
+                    validador = 'alíquota já informada'
+                    break
+                else:
+                    pass
+            if validador != 'alíquota já informada': 
+                listaSoma.append([self.pontoPorVirgula(soma_bc),lista1[1], self.pontoPorVirgula(soma_vImp),'','','','',self.pontoPorVirgula(soma_tProd)])
+            else:
+                pass        
+
+        return listaSoma
         
     def atribui_parametros(self, xml):
         self.xml = xml
         root = Et.parse(self.xml).getroot()
         nsNFe = {'ns':'http://www.portalfiscal.inf.br/nfe'}
+
+        #Cria pastas
+        try:
+            os.mkdir(self.directory + f'\\Avisos')
+        except FileExistsError:
+            pass
 
         total_dpl = 0
         for dpl in root.findall("./ns:NFe/ns:infNFe/ns:cobr/ns:dup", nsNFe):
@@ -64,9 +130,9 @@ class Read_xml():
             #Acumuladores a prazo
             if itens[item][3] == '1556' or itens[item][3] =='1407':
                 resultado = self.buscaDb(itens[item][0][0:4], 'TBUso')
-                if resultado == False:
-                    with open('NCMs a serem configurados.txt', 'a') as arq:
-                        arq.write(f'Configurar no banco de dados/Tabela uso e consumo o NCM {ncm}')
+                if resultado == False:        
+                    with open(self.directory + f'\\Avisos\\NCMs a serem configurados.txt', 'a') as arq:
+                        arq.write(f'Configurar no banco de dados/Tabela uso e consumo o NCM {itens[item][0][0:4]}\n')
                         arq.close()
                 else:
                     contaD = resultado[0][2]
@@ -75,8 +141,8 @@ class Read_xml():
             elif itens[item][3] == '2556' or itens[item][3] == '2407':
                 resultado = self.buscaDb(itens[item][0][0:4], 'TBUso')
                 if resultado == False:
-                    with open('NCMs a serem configurados.txt', 'a') as arq:
-                        arq.write(f'Configurar no banco de dados/Tabela uso e consumo o NCM {ncm}')
+                    with open(self.directory + f'\\Avisos\\NCMs a serem configurados.txt', 'a') as arq:
+                        arq.write(f'Configurar no banco de dados/Tabela uso e consumo o NCM {itens[item][0][0:4]}\n')
                         arq.close()
                 else:
                     contaD = resultado[0][2]
@@ -85,8 +151,8 @@ class Read_xml():
             else: 
                 resultado = self.buscaDb(itens[item][3], 'TBCFOP')
                 if resultado == False:
-                    with open('CFOPs a serem configurados.txt', 'a') as arq:
-                        arq.write(f'Configurar no banco de dados/Tabela CFOP o CFOP {cfop}')
+                    with open(self.directory + f'\\Avisos\\CFOPs a serem configurados.txt', 'a') as arq:
+                        arq.write(f'Configurar no banco de dados/Tabela CFOP o CFOP {cfop}\n')
                         arq.close()
                 else:
                     contaD = resultado[0][1]
@@ -99,8 +165,8 @@ class Read_xml():
             if itens[item][3] == '1556' or itens[item][3] =='1407':
                 resultado = self.buscaDb(itens[item][0][0:4], 'TBUso')
                 if resultado == False:
-                    with open('NCMs a serem configurados.txt', 'a') as arq:
-                        arq.write(f'Configurar no banco de dados/Tabela uso e consumo o NCM {ncm}')
+                    with open(self.directory + f'\\Avisos\\NCMs a serem configurados.txt', 'a') as arq:
+                        arq.write(f'Configurar no banco de dados/Tabela uso e consumo o NCM {itens[item][0][0:4]}\n')
                         arq.close()
                 else:
                     contaD = resultado[0][2]
@@ -110,8 +176,8 @@ class Read_xml():
             elif itens[item][3] == '2556' or itens[item][3] == '2407':
                 resultado = self.buscaDb(itens[item][0][0:4], 'TBUso')
                 if resultado == False:
-                    with open('NCMs a serem configurados.txt', 'a') as arq:
-                        arq.write(f'Configurar no banco de dados/Tabela uso e consumo o NCM {ncm}')
+                    with open(self.directory + f'\\Avisos\\NCMs a serem configurados.txt', 'a') as arq:
+                        arq.write(f'Configurar no banco de dados/Tabela uso e consumo o NCM {itens[item][0][0:4]}\n')
                         arq.close()
                 else:
                     contaD = contaD = resultado[0][2]
@@ -120,17 +186,22 @@ class Read_xml():
             else:
                 resultado = self.buscaDb(itens[item][3], 'TBCFOP')
                 if resultado == False:
-                    with open('CFOPs a serem configurados.txt', 'a') as arq:
-                        arq.write(f'Configurar no banco de dados/Tabela CFOP o CFOP {cfop}')
+                    with open(self.directory + f'\\Avisos\\CFOPs a serem configurados.txt', 'a') as arq:
+                        arq.write(f'Configurar no banco de dados/Tabela CFOP o CFOP {cfop}\n')
                         arq.close()
                 else:
                     contaD = resultado[0][1]
                     contaC = resultado[0][2]
                     acumulador = resultado[0][4]
                     
-                
-
-
+        #Valida se não houve declaração das variáveis     
+        try:
+            if contaD != '':
+                pass
+        except UnboundLocalError:
+                contaD = '0'
+                contaC = '0'
+                acumulador = '0'
         
         return contaD, contaC, acumulador
 
@@ -141,6 +212,12 @@ class Read_xml():
 
         chaveNFe = self.check_none(root.find('./ns:protNFe/ns:infProt/ns:chNFe', nsNFe))
 
+        #Cria pastas
+        try:
+            os.mkdir(self.directory + f'\\ArquivosDominioSeparador')
+        except FileExistsError:
+            pass
+        
         #Registro 0020 - Cadastro de fornecedores
 
         if self.check_none(root.find('./ns:NFe/ns:infNFe/ns:emit/ns:CPF', nsNFe)) != '':
@@ -177,7 +254,7 @@ class Read_xml():
 
         r0020 = '|'.join(['0020',doc_emit,nome_emit[0:150],fantasia_emit[0:40],rua_emit,nro_emit,cpl_emit,bairro_emit,cod_mun_emit,uf_emit,cod_pais_emit,cep_emit,ie_emit,
                           '','',fone_emit[0:2],fone_emit[2:],'','01/01/2021','','','N','7',regimeApura,'S','','','','','N','N','','','\n'])
-        with open(f'C:\\Users\\ADM\\Documents\\Python\\XML Sigma\\NovosArquivos\\{chaveNFe}.txt', 'a') as arqui:
+        with open(self.directory + f'\\ArquivosDominioSeparador\\{chaveNFe}.txt', 'a') as arqui:
             arqui.write(r0020)
             arqui.close()
 
@@ -216,7 +293,7 @@ class Read_xml():
                               '','','','','','','','','','43','43','43','','','01/01/2021','','','','','',
                               '','','','','','','','','','','','\n'])
 
-            with open(f'C:\\Users\\ADM\\Documents\\Python\\XML Sigma\\NovosArquivos\\{chaveNFe}.txt', 'a') as arqui:
+            with open(self.directory + f'\\ArquivosDominioSeparador\\{chaveNFe}.txt', 'a') as arqui:
                 arqui.write(r0100)
                 arqui.close()
 
@@ -274,15 +351,25 @@ class Read_xml():
         t_vipi = self.check_none(root.find("./ns:NFe/ns:infNFe/ns:total/ns:ICMSTot/ns:vIPI", nsNFe))
         t_st = self.check_none(root.find("./ns:NFe/ns:infNFe/ns:total/ns:ICMSTot/ns:vST", nsNFe))
 
+        # if cfop[1:3] == '201' or cfop[1:3] == '203':
+        #     alq_pis = '0,65'
+        #     alq_cofins = '3'
+        # else:
+        #     alq_pis = ''
+        #     alq_cofins = ''
+            
+
         r1000 = '|'.join(['1000',mod,doc_emit,'',acumulador, cfop,'',nfe, serie,'',data_saient,data_emissao,t_nf,'',obs,modfrete,'T','','','',
                          '','','','','',t_vfrete,t_vseguro,t_voutro,t_vpis,'',t_vcofins,'','',t_bcst,'','','','',t_vprod,cod_mun_emit,
                           '0','','',ie_emit,'','','','','','','','','',chaveNFe,'','',cfop,'','','',
-                           '','','','','','','','','','','','','1','','','','','','','',
+                           '','','','','','','','','','','','','1','','','','0,65','3','','',
                            '','','','','','','','','',t_vipi,t_st,'','','','','','','\n'])
-        with open(f'C:\\Users\\ADM\\Documents\\Python\\XML Sigma\\NovosArquivos\\{chaveNFe}.txt', 'a') as arqui:
+        with open(self.directory + f'\\ArquivosDominioSeparador\\{chaveNFe}.txt', 'a') as arqui:
             arqui.write(r1000)
             arqui.close()
         #PRODUTOS
+        ipilist = []
+        icmslist = []
         for item in root.findall("./ns:NFe/ns:infNFe/ns:det", nsNFe):
             cod_item =  self.check_none(item.find(".ns:prod/ns:cProd", nsNFe))
             qtd_item = self.check_none(item.find('.ns:prod/ns:qCom', nsNFe))
@@ -305,6 +392,7 @@ class Read_xml():
                         cst_csosn = self.check_none(item.find(f'.ns:imposto/ns:ICMS{cada}/ns:CSOSN', nsNFe))
                     else:
                         cst_csosn = self.check_none(item.find(f'.ns:imposto/ns:ICMS{cada}/ns:CST', nsNFe))
+                    cst_csosn = orig + cst_csosn
                     bc_icms = self.check_none(item.find(f'.ns:imposto/ns:ICMS{cada}/ns:vBC', nsNFe))
                     bc_icms_st = self.check_none(item.find(f'.ns:imposto/ns:ICMS{cada}/ns:vBCST', nsNFe))
                     alq_icms = self.check_none(item.find(f'.ns:imposto/ns:ICMS{cada}/ns:pICMS', nsNFe))
@@ -331,29 +419,67 @@ class Read_xml():
                     v_seg = self.check_none(item.find('.ns:prod/ns:vSeg', nsNFe))
                     v_outro = self.check_none(item.find('.ns:prod/ns:vOutro', nsNFe))
 
-
                     r1030 = '|'.join(['1030',cod_item,qtd_item,vlr_item,v_ipi,bc_ipi,'1',data_saient,'',cst_csosn,vlr_item,v_desc,bc_icms,bc_icms_st,alq_icms,'','',v_frete,v_seg,v_outro,
                                     '',vlr_icms,vlr_icms_st,'','','',vlr_unit_item,alq_icms_st,'',alq_ipi,bc_issqn,alq_issqn,vlr_issqn,cfop,'',alq_pis,vlr_pis,alq_cofins,vlr_cofins,'',
                                     cst_pis,bc_pis,cst_cofins,bc_cofins,chassi,'','','','','','','',serie_arma,serie_cano,'','S',un_com,'','',v_prod,
                                     '','','','','','','','','','','','','','','','','','','','',
                                     '','','','','','','','','','','',cest,'','','','','','','\n'])
 
-                    with open(f'C:\\Users\\ADM\\Documents\\Python\\XML Sigma\\NovosArquivos\\{chaveNFe}.txt', 'a') as arqui:
+                    with open(self.directory + f'\\ArquivosDominioSeparador\\{chaveNFe}.txt', 'a') as arqui:
                         arqui.write(r1030)
                         arqui.close()
-            
+                    
+                    ipilist.append([v_prod,alq_ipi,bc_ipi,v_ipi]) 
+                    icmslist.append([v_prod,alq_icms,bc_icms,vlr_icms])
+        
+        #Registro 1020 IPI
+        if ipilist != []:
+            rIPI = self.resumeLista(ipilist)
+            r1020=[]
+            for list in rIPI:
+                for i in ['1020','3','']:
+                    r1020.append(i)
+                for i in list:
+                    r1020.append(i)
+                for i in ['','','','','','\n']:
+                    r1020.append(i)
+                
+                r1020 = '|'.join(r1020)
+
+                with open(self.directory + f'\\ArquivosDominioSeparador\\{chaveNFe}.txt', 'a') as arqui:
+                    arqui.write(r1020)
+                    arqui.close()
+                r1020 = []
+
+        #Registro 1020 ICMS
+        rICMS = self.resumeLista(icmslist)
+        r1020 = []
+        for list in rICMS:
+            for i in ['1020','1','']:
+                r1020.append(i)
+            for i in list:
+                r1020.append(i)
+            for i in ['','','','','','\n']:
+                r1020.append(i)
+            i = ''
+            r1020 = '|'.join(r1020)
+
+            with open(self.directory + f'\\ArquivosDominioSeparador\\{chaveNFe}.txt', 'a') as arqui:
+                arqui.write(r1020)
+                arqui.close()
+            r1020 = []
+
         #Boleto
         total_dpl = 0
+        r1500 = []
         for dpl in root.findall("./ns:NFe/ns:infNFe/ns:cobr/ns:dup", nsNFe):
             venc = self.check_none(dpl.find(f'.ns:dVenc', nsNFe))
             venc = venc[8:10] + '/' + venc[5:7] + '/' + venc[0:4]
             vlr_dpl_contador = (dpl.find(f'.ns:vDup', nsNFe))
             vlr_dpl = self.check_none(vlr_dpl_contador)
             total_dpl = total_dpl + float(vlr_dpl_contador.text)
-            r1500 = '|'.join(['1500',venc,vlr_dpl,'','','','','','','','','','','','','\n'])
-            with open(f'C:\\Users\\ADM\\Documents\\Python\\XML Sigma\\NovosArquivos\\{chaveNFe}.txt', 'a') as arqui:
-                arqui.write(r1500)
-                arqui.close()
+            r1500.append(['1500',venc,vlr_dpl,'','','','','','','','','','','','','\n'])
+
 
 
     #def lancamento_contabil(t_nf, total_dpl,data_saient, contaD, contaC,mod,nfe,nome_emit,doc_emit,vlr_dpl,chaveNFe):
@@ -369,23 +495,27 @@ class Read_xml():
                         '\n1300',data_saient,'','104',t_dpl,'',f'CFE DOCUMENTO FISCAL MODELO {mod} DE N° {nfe}, PARTICIPANTE {nome_emit} {doc_emit}','','',
                         '\n1300',data_saient,contaD,'',t_nf,'',f'CFE DOCUMENTO FISCAL MODELO {mod} DE N° {nfe}, PARTICIPANTE {nome_emit} {doc_emit}','','','\n'])
 
-                with open(f'C:\\Users\\ADM\\Documents\\Python\\XML Sigma\\NovosArquivos\\{chaveNFe}.txt', 'a') as arqui:
+                with open(self.directory + f'\\ArquivosDominioSeparador\\{chaveNFe}.txt', 'a') as arqui:
                     arqui.write(r1300)
                     arqui.close()
 
-            elif vlr_vista == float(str(t_nf).replace(',','.')) or total_dpl == float(str(t_nf).replace(',','.')):
+            elif vlr_vista == float(str(t_nf).replace(',','.')) or total_dpl == float(str(t_nf).replace(',','.')) or total_dpl > float(str(t_nf).replace(',','.')) and total_dpl < (float(str(t_nf).replace(',','.')) + 0.01):
                 r1300 = '|'.join(['1300',data_saient,contaD,contaC,t_nf,'',f'CFE DOCUMENTO FISCAL MODELO {mod} DE N° {nfe}, PARTICIPANTE {nome_emit} {doc_emit}','','','\n'])
 
-                with open(f'C:\\Users\\ADM\\Documents\\Python\\XML Sigma\\NovosArquivos\\{chaveNFe}.txt', 'a') as arqui:
+                with open(self.directory + f'\\ArquivosDominioSeparador\\{chaveNFe}.txt', 'a') as arqui:
                     arqui.write(r1300)
                     arqui.close()
             
             else:
-                with open('Duplicatas maiores que o valor da nota.txt', 'a') as arqui:
-                    arqui.write(f'A nota fiscal possui duplicata com valor maior que a nota, não houve lançamento contábi {chaveNFe}')
+                with open(self.directory + f'\\Avisos\\Duplicatas maiores que o valor da nota.txt', 'a') as arqui:
+                    arqui.write(f'A nota fiscal possui duplicata com valor maior que a nota, não houve lançamento contábi {chaveNFe}\n')
                     arqui.close()
 
-
+        #Adicionando dados do boleto no TXT para seguir a ordem (dá erro no domínio se não estiver em ordem)
+        for i in r1500:
+            with open(self.directory + f'\\ArquivosDominioSeparador\\{chaveNFe}.txt', 'a') as arqui:
+                arqui.write('|'.join(i))
+                arqui.close()
 
 
     def check_none(self, var):
@@ -400,5 +530,7 @@ class Read_xml():
                 return var.text
 
 
+
+
 if __name__ == '__main__':
-    obj = Read_xml('C:\\Users\\ADM\\Documents\\Python\\XML Sigma\\XMLs')
+    obj = Read_xml('Z:\\CLIENTES\\- Pessoa Juridica\\Sigma Fabricação e Comercio De Colchoes LTDA\\Escrita Fiscal\\2023\\04-2023\\Arquivos enviado pelo cliente\\Entradas')

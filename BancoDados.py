@@ -95,5 +95,5 @@ class DataBase5:
 if __name__ == '__main__':
     a=DataBase5()
     a.conecta()
-    a.create_table_cfop()
+    a.check_uso('8205')
     a.close_conection()
