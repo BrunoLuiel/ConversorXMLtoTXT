@@ -349,15 +349,7 @@ class Read_xml():
         t_bcst = self.check_none(root.find("./ns:NFe/ns:infNFe/ns:total/ns:ICMSTot/ns:vBCST", nsNFe))
         t_vprod = self.check_none(root.find("./ns:NFe/ns:infNFe/ns:total/ns:ICMSTot/ns:vProd", nsNFe))
         t_vipi = self.check_none(root.find("./ns:NFe/ns:infNFe/ns:total/ns:ICMSTot/ns:vIPI", nsNFe))
-        t_st = self.check_none(root.find("./ns:NFe/ns:infNFe/ns:total/ns:ICMSTot/ns:vST", nsNFe))
-
-        # if cfop[1:3] == '201' or cfop[1:3] == '203':
-        #     alq_pis = '0,65'
-        #     alq_cofins = '3'
-        # else:
-        #     alq_pis = ''
-        #     alq_cofins = ''
-            
+        t_st = self.check_none(root.find("./ns:NFe/ns:infNFe/ns:total/ns:ICMSTot/ns:vST", nsNFe))     
 
         r1000 = '|'.join(['1000',mod,doc_emit,'',acumulador, cfop,'',nfe, serie,'',data_saient,data_emissao,t_nf,'',obs,modfrete,'T','','','',
                          '','','','','',t_vfrete,t_vseguro,t_voutro,t_vpis,'',t_vcofins,'','',t_bcst,'','','','',t_vprod,cod_mun_emit,
