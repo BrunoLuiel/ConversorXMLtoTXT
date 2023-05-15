@@ -52,7 +52,7 @@ class corretorData():
                             with open(dctTXT + '\\' + arqBuscado, 'a') as aqu:
                                 aqu.write(g)
                                 aqu.close()
-                        elif h[0:8] =='1300|//|':
+                        elif h[0:5] =='1300|':
                             g = h.split('|')
                             g.pop(1)
                             g.insert(1,data)
