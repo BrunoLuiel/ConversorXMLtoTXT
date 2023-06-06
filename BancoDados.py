@@ -69,7 +69,7 @@ class DataBase5:
     def check_uso(self, ncm):
         try:
             cursor = self.conection.cursor()
-            cursor.execute(f"""SELECT * FROM UsoConsumo WHERE ncm = {ncm}""")
+            cursor.execute(f"""SELECT * FROM UsoConsumo WHERE ncm = '{ncm}'""")
             resultado = cursor.fetchall()
             if resultado == []:
                 return False
@@ -95,5 +95,5 @@ class DataBase5:
 if __name__ == '__main__':
     a=DataBase5()
     a.conecta()
-    a.check_uso('8205')
+    print(a.check_uso('0901'))
     a.close_conection()

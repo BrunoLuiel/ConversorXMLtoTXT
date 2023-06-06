@@ -35,7 +35,7 @@ class corretorData():
         dctTXT = self.directory + '\\ArquivosDominioSeparador'
         arqs = self.allfiles(dctTXT, '.txt')
         for i in chave:
-            data = str(i[1][8:10] + '/' + i[1][5:7] + '/' + i[1][0:4])
+            data = str(i[1][8:10]) + '/' + str(i[1][5:7]) + '/' + str(i[1][0:4])
             for x in arqs:
                 arqBuscado = str(i[0] + '.txt')
                 if arqBuscado == x:
@@ -76,5 +76,5 @@ class corretorData():
 
 
 if __name__ == '__main__':
-    a = corretorData('Z:\\CLIENTES\\- Pessoa Juridica\\Sigma Fabricação e Comercio De Colchoes LTDA\\Escrita Fiscal\\2023\\04-2023\\Arquivos enviado pelo cliente\\Entradas')
+    a = corretorData('Z:\\CLIENTES\\- Pessoa Juridica\\Sigma Fabricação e Comercio De Colchoes LTDA\\Escrita Fiscal\\2023\\05-2023\\Arquivos enviado pelo cliente\\Entradas')
     a.executaCorrecao()

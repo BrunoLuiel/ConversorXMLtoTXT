@@ -525,4 +525,4 @@ class Read_xml():
 
 
 if __name__ == '__main__':
-    obj = Read_xml('Z:\\CLIENTES\\- Pessoa Juridica\\Sigma Fabricação e Comercio De Colchoes LTDA\\Escrita Fiscal\\2023\\04-2023\\Arquivos enviado pelo cliente\\Entradas')
+    obj = Read_xml('Z:\\CLIENTES\\- Pessoa Juridica\\Sigma Fabricação e Comercio De Colchoes LTDA\\Escrita Fiscal\\2023\\05-2023\\Arquivos enviado pelo cliente\\Entradas')
