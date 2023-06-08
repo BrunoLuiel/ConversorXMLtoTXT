@@ -1,5 +1,11 @@
 import os
 import pandas as pd
+import xml.dom.minidom
+from xml.dom import minidom
+import xml.etree.ElementTree as Et
+from lxml import etree
+import chardet
+import re
 
 class corretorData():
     def __init__(self, directory) -> None:
@@ -7,6 +13,16 @@ class corretorData():
         self.planilha = self.directory + '\\' + self.allfiles(self.directory, '.xlsx')
         pass
 
+    def check_none(self, var):
+        if var == None:
+            return ''
+        else:
+            try:
+                var= var.text.replace('.',',')
+                var= var.replace('|','-')
+                return var
+            except:
+                return var.text
     
     def allfiles(self, diretorio, raiz):
         arqs = os.listdir(diretorio)
@@ -29,52 +45,85 @@ class corretorData():
         plan = pd.read_excel(self.planilha, dtype={'Chave da NF-e ':str, 'Data da entrada':str})
         for i,lin in enumerate(plan['Número da NF-e']):
             lista.append([plan['Chave da NF-e '][i], plan['Data da entrada'][i]])
-        self.alteraTXT(lista)
-        
-    def alteraTXT(self, chave):
-        dctTXT = self.directory + '\\ArquivosDominioSeparador'
-        arqs = self.allfiles(dctTXT, '.txt')
+        self.alteraXML(lista)
+
+    def corrigir_xml(self,arquivo):
+        try:
+            # Detectar a codificação do arquivo
+            with open(arquivo, 'rb') as f:
+                raw_data = f.read()
+                result = chardet.detect(raw_data)
+                encoding = result['encoding']
+
+            # Carregar o arquivo XML com a codificação correta
+            parser = etree.XMLParser(encoding=encoding)
+            tree = etree.parse(arquivo, parser)
+
+            # Obter os elementos de texto dentro do XML
+            text_nodes = tree.xpath('//text()')
+
+            # Substituir os caracteres problemáticos apenas nos dados entre as tags
+            caracteres_problematicos = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&apos;',
+                '¡': '&#161;',
+                '-': '&#45;'
+            }
+            for node in text_nodes:
+                if node.getparent() is not None and node.getparent().text is not None:
+                    text = node.getparent().text
+                    for caracter, substituicao in caracteres_problematicos.items():
+                        if caracter == '-' and re.search(r'\d+-\d+|\d+-|\d+', text):
+                            continue
+                        node.getparent().text = text.replace(caracter, substituicao)
+
+            # Salvar as alterações no próprio arquivo XML
+            tree.write(arquivo, pretty_print=True, encoding=encoding)
+
+            #print("Arquivo XML corrigido:", arquivo)
+
+        except Exception as e:
+            pass#print("Erro ao corrigir o XML:", str(e))
+
+    def alteraXML(self,chave):
+        dctTXT = self.directory
+        arqs = self.allfiles(dctTXT, '.xml')
         for i in chave:
-            data = str(i[1][8:10]) + '/' + str(i[1][5:7]) + '/' + str(i[1][0:4])
+            data_ = str(i[1])
             for x in arqs:
-                arqBuscado = str(i[0] + '.txt')
-                if arqBuscado == x:
-                    with open(dctTXT + '\\' + arqBuscado, 'r') as aq:
-                        aqConteudo = aq.readlines()
-                        aq.close()
-                    os.remove(dctTXT + '\\' + arqBuscado)
-                    for h in aqConteudo:
-                        if h[0:4] == '1000':
-                            g = h.split('|')
-                            g.pop(10)
-                            g.insert(10,data)
-                            g = '|'.join(g)
-                            with open(dctTXT + '\\' + arqBuscado, 'a') as aqu:
-                                aqu.write(g)
-                                aqu.close()
-                        elif h[0:5] =='1300|':
-                            g = h.split('|')
-                            g.pop(1)
-                            g.insert(1,data)
-                            g = '|'.join(g)
-                            with open(dctTXT + '\\' + arqBuscado, 'a') as aqu:
-                                aqu.write(g)
-                                aqu.close()
+                try:
+                    root = Et.parse(self.directory + '\\' + x).getroot()
+                    nsNFe = {'ns':'http://www.portalfiscal.inf.br/nfe'}
+                    arqBuscado = str(i[0])
+                    chaveNFe = self.check_none(root.find('./ns:protNFe/ns:infProt/ns:chNFe', nsNFe))
+                    if arqBuscado == chaveNFe:
+                        dom = xml.dom.minidom.parse(self.directory + '\\' + x)
+
+                    # Encontrar a tag <dhSaiEnt> e alterar seu texto
+                        dhSaiEnt_tags = dom.getElementsByTagName('dhSaiEnt')
+                        if len(dhSaiEnt_tags) > 0:
+                            for dhSaiEnt_tag in dhSaiEnt_tags:
+                                        if dhSaiEnt_tag.firstChild is not None:
+                                            dhSaiEnt_tag.firstChild.data = data_
+                                        else:
+                                            text_node = dom.createTextNode(data_)
+                                            dhSaiEnt_tag.appendChild(text_node)
                         else:
-                            with open(dctTXT + '\\' + arqBuscado, 'a') as aqu:
-                                aqu.write(h)
-                                aqu.close()
-                    break
-
-
-                            
-
-
-
-
-
-
+                            nova_tag = dom.createElement("dhSaiEnt")
+                            text_node = dom.createTextNode(data_)
+                            nova_tag.appendChild(text_node)
+                            elemento_pai = dom.getElementsByTagName("ide")[0]
+                            elemento_pai.appendChild(nova_tag)
+                        with open(self.directory + '\\' + x, 'w', encoding='utf-8') as f:
+                            dom.writexml(f)
+                            f.close()
+                        break
+                except:
+                    pass
 
 if __name__ == '__main__':
-    a = corretorData('Z:\\CLIENTES\\- Pessoa Juridica\\Sigma Fabricação e Comercio De Colchoes LTDA\\Escrita Fiscal\\2023\\05-2023\\Arquivos enviado pelo cliente\\Entradas')
+    a = corretorData('Z:\\CLIENTES\\- Pessoa Juridica\\Santos & Avila Fabricação E Comércio De Estofados LTDA\\Escrita Fiscal\\2023\\05-2023\\Arquivos enviado pelo cliente\\Entradas')
     a.executaCorrecao()

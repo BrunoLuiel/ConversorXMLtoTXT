@@ -18,8 +18,6 @@ class Read_xml():
             self.obj1 = self.atribui_parametros(file)
             self.check_chave(file, self.obj1[0], self.obj1[1], self.obj1[2])
 
-
-
     def allfiles(self):
         return [ os.path.join(self.directory, arq) for arq in os.listdir(self.directory) if arq.lower().endswith('.xml')]
     
@@ -102,7 +100,7 @@ class Read_xml():
         itens = []
         for item in root.findall("./ns:NFe/ns:infNFe/ns:det", nsNFe):
             ncm = self.check_none(item.find('.ns:prod/ns:NCM', nsNFe))
-            codigos = ['/ns:ICMS00', '/ns:ICMS10', '/ns:ICMS20', '/ns:ICMS30', '/ns:ICMS40', '/ns:ICMS51', '/ns:ICMS60', '/ns:ICMS70', '/ns:ICMS90', '/ns:ICMSSN101', '/ns:ICMSSN102', '/ns:ICMSSN201', '/ns:ICMSSN202', '/ns:ICMSSN500', '/ns:ICMSSN900']
+            codigos = ['/ns:ICMS00', '/ns:ICMS10', '/ns:ICMS20', '/ns:ICMS30', '/ns:ICMS40', '/ns:ICMS51', '/ns:ICMS60', '/ns:ICMS70', '/ns:ICMS90', '/ns:ICMSSN101', '/ns:ICMSSN102', '/ns:ICMSSN201', '/ns:ICMSSN202', '/ns:ICMSSN500', '/ns:ICMSSN900', '/ns:ICMSST']
             for cada in codigos:
                 if self.check_none(item.find(f'.ns:imposto/ns:ICMS{cada}/ns:orig', nsNFe)) == '':
                     pass
@@ -429,7 +427,7 @@ class Read_xml():
             rIPI = self.resumeLista(ipilist)
             r1020=[]
             for list in rIPI:
-                for i in ['1020','3','']:
+                for i in ['1020','2','']:
                     r1020.append(i)
                 for i in list:
                     r1020.append(i)
@@ -525,4 +523,4 @@ class Read_xml():
 
 
 if __name__ == '__main__':
-    obj = Read_xml('Z:\\CLIENTES\\- Pessoa Juridica\\Sigma Fabricação e Comercio De Colchoes LTDA\\Escrita Fiscal\\2023\\05-2023\\Arquivos enviado pelo cliente\\Entradas')
+    obj = Read_xml('Z:\\CLIENTES\\- Pessoa Juridica\\Santos & Avila Fabricação E Comércio De Estofados LTDA\\Escrita Fiscal\\2023\\05-2023\\Arquivos enviado pelo cliente\\Entradas')
